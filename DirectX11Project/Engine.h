@@ -2,6 +2,7 @@
 #include <windows.h>
 #include "Version.hpp"
 #include <iostream>;
+#include "Renderer.h"
 
 using std::cout;
 
@@ -26,5 +27,7 @@ private:
 
 	const int Width = 800; // define width of window
 	const int Height = 600; // define height of window
+
+	Renderer *renderer;
 };
 

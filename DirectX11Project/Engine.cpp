@@ -1,5 +1,6 @@
 #include "Engine.h"
 #include <string>
+#include "Renderer.h"
 
 
 Engine::Engine(HINSTANCE hInstance, int nShowCmd)
@@ -18,11 +19,22 @@ Engine::Engine(HINSTANCE hInstance, int nShowCmd)
 		return;
 	}
 	PrintConsoleHeader();
+
+	renderer = new Renderer(hwnd, hInstance, Width, Height);	// Initialize Renderer object
+
+
+	if(!renderer->InitScene())	//Initialize the scene
+	{
+		MessageBox(0, L"Scene Initialization - Failed",
+			L"Error", MB_OK);
+		return;
+	}
 }
 
 
 Engine::~Engine()
 {
+	renderer->ReleaseObjects();
 }
 
 
@@ -138,6 +150,9 @@ int Engine::Run() {
 		}
 		else {
 			// run game code
+
+			renderer->UpdateScene();
+			renderer->DrawScene();
 		}
 	}
 	return msg.wParam;
@@ -151,17 +166,17 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 {
 	switch (msg)
 	{
-	case WM_KEYDOWN:
-		if (wParam == VK_ESCAPE) {
-			if (MessageBox(0, L"Are you sure you want to exit?",
-				L"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
-				DestroyWindow(hwnd);
-		}
-		return 0;
+		case WM_KEYDOWN:
+			if (wParam == VK_ESCAPE) {
+				if (MessageBox(0, L"Are you sure you want to exit?",
+					L"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
+					DestroyWindow(hwnd);
+			}
+			return 0;
 
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			return 0;
 	}
 
 	// default windows procedure function. We call this at the end to take care of 

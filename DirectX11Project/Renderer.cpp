@@ -158,7 +158,7 @@ void Renderer::UpdateScene()
 void Renderer::DrawScene()
 {
 	//Clear our backbuffer to the updated color
-	D3DXCOLOR bgColor(red, green, blue, 1.0f);
+	float bgColor[4] = { red, green, blue, 1.0f };
 
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 

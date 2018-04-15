@@ -115,8 +115,25 @@ bool Renderer::InitializeDirect3d11App(HINSTANCE hInstance)
 		return 0;
 	}
 
+	// Create Depth/Stencil View
+	D3D11_TEXTURE2D_DESC depthStencilDesc;
+	depthStencilDesc.Width = Width;
+	depthStencilDesc.Height = Height;
+	depthStencilDesc.MipLevels = 1;
+	depthStencilDesc.ArraySize = 1;
+	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthStencilDesc.SampleDesc.Count = 1;
+	depthStencilDesc.SampleDesc.Quality = 0;
+	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilDesc.CPUAccessFlags = 0;
+	depthStencilDesc.MiscFlags = 0;
+
+	d3d11Device->CreateTexture2D(&depthStencilDesc, NULL, &depthStencilBuffer);
+	d3d11Device->CreateDepthStencilView(depthStencilBuffer, NULL, &depthStencilView);
+
 	//Set our Render Target
-	d3d11DevCon->OMSetRenderTargets(1, &renderTargetView, NULL);
+	d3d11DevCon->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 
 	return true;
 }
@@ -137,6 +154,8 @@ void Renderer::ReleaseObjects()
 	VS_Buffer->Release();
 	PS_Buffer->Release();
 	vertLayout->Release();
+	depthStencilView->Release();
+	depthStencilBuffer->Release();
 }
 
 // Set up scene
@@ -226,6 +245,8 @@ bool Renderer::InitScene()
 	viewport.TopLeftY = 0;
 	viewport.Width = Width;
 	viewport.Height = Height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
 
 	//Set the Viewport
 	d3d11DevCon->RSSetViewports(1, &viewport);
@@ -245,6 +266,9 @@ void Renderer::DrawScene()
 	// Clear the backbuffer
 	float bgColor[4] = { (0.0f, 0.0f, 0.0f, 0.0f) };
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
+
+	// Refresh the Depth/Stencil view
+	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//Draw the triangle
 	d3d11DevCon->DrawIndexed(6, 0, 0);

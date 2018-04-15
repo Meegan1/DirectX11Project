@@ -33,6 +33,8 @@ private:
 
 	ID3D11Buffer* squareIndexBuffer;
 	ID3D11Buffer* squareVertBuffer;
+	ID3D11DepthStencilView* depthStencilView;
+	ID3D11Texture2D* depthStencilBuffer;
 	ID3D11VertexShader* VS;
 	ID3D11PixelShader* PS;
 	ID3D10Blob* VS_Buffer;

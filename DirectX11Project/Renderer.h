@@ -31,6 +31,15 @@ private:
 	ID3D11DeviceContext* d3d11DevCon;
 	ID3D11RenderTargetView* renderTargetView;
 
+	ID3D11Buffer* triangleVertBuffer;
+	ID3D11VertexShader* VS;
+	ID3D11PixelShader* PS;
+	ID3D10Blob* VS_Buffer;
+	ID3D10Blob* PS_Buffer;
+	ID3D11InputLayout* vertLayout;
+
+
+
 	float red = 0.0f;
 	float green = 0.0f;
 	float blue = 0.0f;
@@ -40,5 +49,6 @@ private:
 
 	HWND hwnd;
 	const int Width, Height;
+	
+	HRESULT hr;
 };
-

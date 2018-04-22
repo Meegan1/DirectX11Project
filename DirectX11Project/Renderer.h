@@ -40,12 +40,23 @@ private:
 	ID3D10Blob* VS_Buffer;
 	ID3D10Blob* PS_Buffer;
 	ID3D11InputLayout* vertLayout;
+	ID3D11Buffer* cbPerObjectBuffer;
 
 
 	HWND hwnd;
 	const int Width, Height;
 	
 	HRESULT hr;
+
+	XMMATRIX WVP, World, camView, camProjection;
+	XMVECTOR camPosition, camTarget, camUp;
+
+	//Create effects constant buffer's structure//
+	struct cbPerObject
+	{
+		XMMATRIX WVP;
+	};
+	cbPerObject cbPerObj;
 
 	//Vertex Structure and Vertex Layout (Input Layout)//
 	struct Vertex	//Overloaded Vertex Structure

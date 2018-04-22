@@ -156,6 +156,7 @@ void Renderer::ReleaseObjects()
 	vertLayout->Release();
 	depthStencilView->Release();
 	depthStencilBuffer->Release();
+	cbPerObjectBuffer->Release();
 }
 
 // Set up scene
@@ -251,6 +252,29 @@ bool Renderer::InitScene()
 	//Set the Viewport
 	d3d11DevCon->RSSetViewports(1, &viewport);
 
+	//Create the buffer to send to the cbuffer in effect file
+	D3D11_BUFFER_DESC cbbd;
+	ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
+
+	cbbd.Usage = D3D11_USAGE_DEFAULT;
+	cbbd.ByteWidth = sizeof(cbPerObject);
+	cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbbd.CPUAccessFlags = 0;
+	cbbd.MiscFlags = 0;
+
+	hr = d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerObjectBuffer);
+
+	//Camera information
+	camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
+	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	//Set the View matrix
+	camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
+
+	//Set the Projection matrix
+	camProjection = XMMatrixPerspectiveFovLH(0.4f*3.14f, Width / Height, 1.0f, 1000.0f);
+
 	return true;
 }
 
@@ -269,6 +293,18 @@ void Renderer::DrawScene()
 
 	// Refresh the Depth/Stencil view
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+
+	// Set World/View/Projection matrix, then send it to constant buffer in effect file
+	World = XMMatrixIdentity();
+
+	WVP = World * camView * camProjection;
+
+	cbPerObj.WVP = XMMatrixTranspose(WVP);
+
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+
+	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	//Draw the triangle
 	d3d11DevCon->DrawIndexed(6, 0, 0);

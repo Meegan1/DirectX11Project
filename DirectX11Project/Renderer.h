@@ -51,6 +51,10 @@ private:
 	XMMATRIX WVP, World, camView, camProjection;
 	XMVECTOR camPosition, camTarget, camUp;
 
+	XMMATRIX cube1World, cube2World, Rotation, Scale, Translation;
+
+	float rot = 0.01f;
+
 	//Create effects constant buffer's structure//
 	struct cbPerObject
 	{

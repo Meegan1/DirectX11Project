@@ -157,6 +157,7 @@ void Renderer::ReleaseObjects()
 	depthStencilView->Release();
 	depthStencilBuffer->Release();
 	cbPerObjectBuffer->Release();
+	WireFrame->Release();
 }
 
 // Set up scene
@@ -300,6 +301,13 @@ bool Renderer::InitScene()
 	//Set the Projection matrix
 	camProjection = XMMatrixPerspectiveFovLH(0.4f*3.14f, Width / Height, 1.0f, 1000.0f);
 
+	//Create WireFrame Rasterizer State
+	D3D11_RASTERIZER_DESC wfdesc;
+	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
+	wfdesc.FillMode = D3D11_FILL_WIREFRAME;
+	wfdesc.CullMode = D3D11_CULL_NONE;
+	hr = d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
+
 	return true;
 }
 
@@ -353,6 +361,7 @@ void Renderer::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	//Draw the first cube
+	d3d11DevCon->RSSetState(WireFrame);
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 
 	WVP = cube2World * camView * camProjection;
@@ -361,7 +370,7 @@ void Renderer::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	// Draw the second cube
-
+	d3d11DevCon->RSSetState(NULL);
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 
 	//Present the backbuffer to the screen

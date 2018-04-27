@@ -165,6 +165,9 @@
   <ItemGroup>
     <FxCompile Include="Effects.fx" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Texture.jpg" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

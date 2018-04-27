@@ -42,6 +42,9 @@ private:
 	ID3D11InputLayout* vertLayout;
 	ID3D11Buffer* cbPerObjectBuffer;
 
+	ID3D11ShaderResourceView* CubesTexture;
+	ID3D11SamplerState* CubesTextSamplerState;
+
 
 	HWND hwnd;
 	const int Width, Height;
@@ -66,16 +69,16 @@ private:
 	struct Vertex	//Overloaded Vertex Structure
 	{
 		Vertex() {}
-		Vertex(float x, float y, float z, float cr, float cg, float cb, float ca)
-			: pos(x, y, z), color(cr, cg, cb, ca) {}
+		Vertex(float x, float y, float z, float u, float v)
+			: pos(x, y, z), texCoord(u, v) {}
 
 		XMFLOAT3 pos;
-		XMFLOAT4 color;
+		XMFLOAT2 texCoord;
 	};
 	D3D11_INPUT_ELEMENT_DESC layout[2] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 	UINT numElements = ARRAYSIZE(layout);
 };

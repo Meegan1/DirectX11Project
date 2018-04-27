@@ -45,6 +45,10 @@ private:
 	ID3D11ShaderResourceView* CubesTexture;
 	ID3D11SamplerState* CubesTextSamplerState;
 
+	ID3D11BlendState* Transparency;
+	ID3D11RasterizerState* CCWcullMode;
+	ID3D11RasterizerState* CWcullMode;
+
 
 	HWND hwnd;
 	const int Width, Height;

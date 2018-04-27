@@ -157,6 +157,9 @@ void Renderer::ReleaseObjects()
 	depthStencilView->Release();
 	depthStencilBuffer->Release();
 	cbPerObjectBuffer->Release();
+	Transparency->Release();
+	CCWcullMode->Release();
+	CWcullMode->Release();
 }
 
 // Set up scene
@@ -338,7 +341,44 @@ bool Renderer::InitScene()
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	samplerDesc.MinLOD = 0;
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
 	hr = d3d11Device->CreateSamplerState(&samplerDesc, &CubesTextSamplerState);
+
+	//Define Blending Equation
+	D3D11_BLEND_DESC blendDesc;
+	ZeroMemory(&blendDesc, sizeof(blendDesc));
+
+	D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+	ZeroMemory(&rtbd, sizeof(rtbd));
+
+	rtbd.BlendEnable = true;
+	rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
+	rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
+	rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlendAlpha = D3D11_BLEND_ZERO;
+	rtbd.DestBlendAlpha = D3D11_BLEND_ONE;
+	rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+	blendDesc.AlphaToCoverageEnable = false;
+	blendDesc.RenderTarget[0] = rtbd;
+
+	d3d11Device->CreateBlendState(&blendDesc, &Transparency);
+
+
+	//Create counter clockwise and clockwise culling states
+	D3D11_RASTERIZER_DESC cmdesc;
+	ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+
+	cmdesc.FillMode = D3D11_FILL_SOLID;
+	cmdesc.CullMode = D3D11_CULL_BACK;
+
+	cmdesc.FrontCounterClockwise = true;
+	hr = d3d11Device->CreateRasterizerState(&cmdesc, &CCWcullMode);
+	
+	cmdesc.FrontCounterClockwise = false;
+	hr = d3d11Device->CreateRasterizerState(&cmdesc, &CWcullMode);
+
 
 	return true;
 }
@@ -347,7 +387,7 @@ bool Renderer::InitScene()
 void Renderer::UpdateScene()
 {
 	// Keeps the cubes rotating
-	rot += .01005f;
+	rot += .0005f;
 	if (rot > 6.28f)
 		rot = 0.0f;
 
@@ -386,6 +426,54 @@ void Renderer::DrawScene()
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 
+	// Blending
+	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
+
+	// Set default blend state (no blending) for opaque objects
+	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
+
+	// =========[Render opaque objects]=========
+
+
+
+	// Set blend state for transparent objects
+	d3d11DevCon->OMSetBlendState(Transparency, blendFactor, 0xffffffff);
+
+	//*****Transparency Depth Ordering*****//
+	//Find which transparent object is further from the camera
+	//So we can render the objects in depth order to the render target
+
+	//Find distance from first cube to camera
+	XMVECTOR cubePos = XMVectorZero();
+
+	cubePos = XMVector3TransformCoord(cubePos, cube1World);
+
+	float distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
+	float distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
+	float distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
+
+	float cube1Dist = distX * distX + distY * distY + distZ * distZ;
+
+	//Find distance from second cube to camera
+	cubePos = XMVectorZero();
+
+	cubePos = XMVector3TransformCoord(cubePos, cube2World);
+
+	distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
+	distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
+	distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
+
+	float cube2Dist = distX * distX + distY * distY + distZ * distZ;
+
+	//If the first cubes distance is less than the second cubes
+	if (cube1Dist < cube2Dist)
+	{
+		//Switch the order in which the cubes are drawn
+		XMMATRIX tempMatrix = cube1World;
+		cube1World = cube2World;
+		cube2World = tempMatrix;
+	}
+
 	// Set World/View/Projection matrix, then send it to constant buffer in effect file
 	WVP = cube1World * camView * camProjection;
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
@@ -395,6 +483,11 @@ void Renderer::DrawScene()
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTextSamplerState);
 
 	//Draw the first cube
+	//Counter clockwise culling first because we need the back side of
+	//the cube to be rendered first, so the front side can blend with it
+	d3d11DevCon->RSSetState(CCWcullMode);
+	d3d11DevCon->DrawIndexed(36, 0, 0);
+	d3d11DevCon->RSSetState(CWcullMode);
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 
 	WVP = cube2World * camView * camProjection;
@@ -405,9 +498,11 @@ void Renderer::DrawScene()
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTextSamplerState);
 
 	// Draw the second cube
-
+	d3d11DevCon->RSSetState(CCWcullMode);
+	d3d11DevCon->DrawIndexed(36, 0, 0);
+	d3d11DevCon->RSSetState(CWcullMode);
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 
 	//Present the backbuffer to the screen
-	SwapChain->Present(1, 0);
+	SwapChain->Present(0, 0);
 }

@@ -3,27 +3,36 @@
 
 Engine::Engine(HINSTANCE hInstance, int nShowCmd)
 {
-	if (!InitializeWindow(hInstance, nShowCmd, Width, Height, true))
-	{
-		MessageBox(0, L"Window Initialization - Failed",
-			L"Error", MB_OK);
-		return;
-	}
+
 
 	if(!AttachConsole())
 	{
-		MessageBox(0, L"Console Initialization - Failed",
+		MessageBox(nullptr, L"Console Initialization - Failed",
 			L"Error", MB_OK);
 		return;
 	}
 	PrintConsoleHeader();
+
+	if (!InitializeWindow(hInstance, nShowCmd, Width, Height, true))
+	{
+		MessageBox(nullptr, L"Window Initialization - Failed",
+			L"Error", MB_OK);
+		return;
+	}
 
 	renderer = new Renderer(hwnd, hInstance, Width, Height);	// Initialize Renderer object
 
 
 	if(!renderer->InitScene())	//Initialize the scene
 	{
-		MessageBox(0, L"Scene Initialization - Failed",
+		MessageBox(nullptr, L"Scene Initialization - Failed",
+			L"Error", MB_OK);
+		return;
+	}
+
+	if (!renderer->InitDirectInput(hInstance))
+	{
+		MessageBox(nullptr, L"Direct Input Initialization - Failed",
 			L"Error", MB_OK);
 		return;
 	}
@@ -59,16 +68,16 @@ bool Engine::InitializeWindow(HINSTANCE hInstance,
 	wc.cbClsExtra = NULL;
 	wc.cbWndExtra = NULL;
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 2);
-	wc.lpszMenuName = NULL;
+	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = WndClassName;
-	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
 
 	if (!RegisterClassEx(&wc))
 	{
-		MessageBox(NULL, L"Error registering class",
+		MessageBox(nullptr, L"Error registering class",
 			L"Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
@@ -81,15 +90,15 @@ bool Engine::InitializeWindow(HINSTANCE hInstance,
 		CW_USEDEFAULT,
 		width,
 		height,
-		NULL,
-		NULL,
+	                      nullptr,
+	                      nullptr,
 		hInstance,
-		NULL
+	                      nullptr
 	);
 
 	if (!hwnd)
 	{
-		MessageBox(NULL, L"Error creating window",
+		MessageBox(nullptr, L"Error creating window",
 			L"Error", MB_OK | MB_ICONERROR);
 		return 1;
 	}
@@ -136,7 +145,7 @@ int Engine::Run() {
 
 		UINT wRemoveMsg - This specifies how the message will be handled.We set to PM_REMOVE so the message will be deleted after we read it.
 		*/
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT) // close if quit message
 				break;
@@ -149,6 +158,7 @@ int Engine::Run() {
 		else {
 			// run game code
 			HRT::Tick();
+			renderer->DetectInput(HRT::GetFrameTime());
 			renderer->UpdateScene(HRT::GetFrameTime());
 			renderer->DrawScene();
 		}
@@ -166,7 +176,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 	{
 		case WM_KEYDOWN:
 			if (wParam == VK_ESCAPE) {
-				if (MessageBox(0, L"Are you sure you want to exit?",
+				if (MessageBox(nullptr, L"Are you sure you want to exit?",
 					L"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
 					DestroyWindow(hwnd);
 			}

@@ -27,8 +27,8 @@ private:
 	LPCTSTR WndClassName = L"firstwindow"; // window class name
 	HWND hwnd = nullptr; // window handler
 
-	const int Width = 800; // define width of window
-	const int Height = 600; // define height of window
+	const int Width = 1500; // define width of window
+	const int Height = 1500; // define height of window
 
 	Renderer *renderer;
 };

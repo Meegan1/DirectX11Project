@@ -10,6 +10,9 @@
 #pragma comment (lib, "D2D1.lib")
 #pragma comment (lib, "dwrite.lib")
 
+#pragma comment (lib, "dinput8.lib")
+#pragma comment (lib, "dxguid.lib")
+
 #include <d3d11.h>
 #include <d3dx11.h>
 #include <d3dx10.h>
@@ -20,6 +23,8 @@
 #include <D2D1.h>
 #include <sstream>
 #include <dwrite.h>
+
+#include <dinput.h>
 
 #include <iostream>
 #include "hrt.h"
@@ -40,6 +45,9 @@ public:
 	bool InitD2D_D3D101_DWrite(IDXGIAdapter1 *Adapter);
 	void InitD2DScreenTexture();
 	void RenderText(std::wstring text);
+
+	bool InitDirectInput(HINSTANCE hInstance);
+	void DetectInput(double time);
 
 private:
 	IDXGISwapChain * SwapChain;
@@ -66,8 +74,22 @@ private:
 	ID3D11RasterizerState* CCWcullMode;
 	ID3D11RasterizerState* CWcullMode;
 
+	// =============[Direct Input]===================
+	IDirectInputDevice8* DIKeyboard;
+	IDirectInputDevice8* DIMouse;
 
+	DIMOUSESTATE mouseLastState;
+	LPDIRECTINPUT8 DirectInput;
 
+	float rotx = 0;
+	float rotz = 0;
+	float scaleX = 1.0f;
+	float scaleY = 1.0f;
+
+	XMMATRIX Rotationx;
+	XMMATRIX Rotationz;
+
+	// ===============[2D Font]=================
 	ID3D10Device1 *d3d101Device;
 	IDXGIKeyedMutex *keyedMutex11;
 	IDXGIKeyedMutex *keyedMutex10;

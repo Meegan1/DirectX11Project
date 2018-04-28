@@ -5,7 +5,7 @@ Renderer::Renderer(HWND hWindow, HINSTANCE hInstance, int Width, int Height) : h
 {
 	if (!this->InitializeDirect3d11App(hInstance))	// Initialize Direct3D
 	{
-		MessageBox(0, L"Direct3D Initialization - Failed",
+		MessageBox(nullptr, L"Direct3D Initialization - Failed",
 			L"Error", MB_OK);
 		return;
 	}
@@ -62,22 +62,22 @@ bool Renderer::InitializeDirect3d11App(HINSTANCE hInstance)
 	DXGIFactory->Release();
 
 	//Create our SwapChain
-	hr = D3D11CreateDeviceAndSwapChain(Adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-		NULL, NULL, D3D11_SDK_VERSION, &swapChainDesc, &SwapChain, &d3d11Device, NULL, &d3d11DevCon);
+	hr = D3D11CreateDeviceAndSwapChain(Adapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+	                                   nullptr, NULL, D3D11_SDK_VERSION, &swapChainDesc, &SwapChain, &d3d11Device, nullptr, &d3d11DevCon);
 	if (FAILED(hr))
 	{
 		LPWSTR output;
 			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
 				FORMAT_MESSAGE_IGNORE_INSERTS |
 				FORMAT_MESSAGE_ALLOCATE_BUFFER,
-				NULL,
+			              nullptr,
 				hr,
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 				(LPTSTR)&output,
 				0,
-				NULL);
+			              nullptr);
 
-		MessageBox(NULL, output,
+		MessageBox(nullptr, output,
 			TEXT(" D3D11CreateDeviceAndSwapChain"), MB_OK);
 		return 0;
 	}
@@ -96,34 +96,34 @@ bool Renderer::InitializeDirect3d11App(HINSTANCE hInstance)
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
 			FORMAT_MESSAGE_IGNORE_INSERTS |
 			FORMAT_MESSAGE_ALLOCATE_BUFFER,
-			NULL,
+		              nullptr,
 			hr,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			(LPTSTR)&output,
 			0,
-			NULL);
+		              nullptr);
 
-		MessageBox(NULL, output,
+		MessageBox(nullptr, output,
 			TEXT("SwapChain->GetBuffer"), MB_OK);
 		return 0;
 	}
 
 	//Create our Render Target
-	hr = d3d11Device->CreateRenderTargetView(BackBuffer11, NULL, &renderTargetView);
+	hr = d3d11Device->CreateRenderTargetView(BackBuffer11, nullptr, &renderTargetView);
 	if (FAILED(hr))
 	{
 		LPWSTR output;
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
 			FORMAT_MESSAGE_IGNORE_INSERTS |
 			FORMAT_MESSAGE_ALLOCATE_BUFFER,
-			NULL,
+		              nullptr,
 			hr,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			(LPTSTR)&output,
 			0,
-			NULL);
+		              nullptr);
 
-		MessageBox(NULL, output,
+		MessageBox(nullptr, output,
 			TEXT("d3d11Device->CreateRenderTargetView"), MB_OK);
 		return 0;
 	}
@@ -142,8 +142,8 @@ bool Renderer::InitializeDirect3d11App(HINSTANCE hInstance)
 	depthStencilDesc.CPUAccessFlags = 0;
 	depthStencilDesc.MiscFlags = 0;
 
-	d3d11Device->CreateTexture2D(&depthStencilDesc, NULL, &depthStencilBuffer);
-	d3d11Device->CreateDepthStencilView(depthStencilBuffer, NULL, &depthStencilView);
+	d3d11Device->CreateTexture2D(&depthStencilDesc, nullptr, &depthStencilBuffer);
+	d3d11Device->CreateDepthStencilView(depthStencilBuffer, nullptr, &depthStencilView);
 
 	//Set our Render Target
 	d3d11DevCon->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
@@ -187,13 +187,17 @@ void Renderer::ReleaseObjects()
 	d2dTexture->Release();
 
 	cbPerFrameBuffer->Release();
+
+	DIKeyboard->Unacquire();
+	DIMouse->Unacquire();
+	DirectInput->Release();
 }
 
 bool Renderer::InitD2D_D3D101_DWrite(IDXGIAdapter1 *Adapter)
 {
 	HRESULT hr;
 	//Create our Direc3D 10.1 Device///////////////////////////////////////////////////////////////////////////////////////
-	hr = D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_DEBUG | D3D10_CREATE_DEVICE_BGRA_SUPPORT,
+	hr = D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, nullptr, D3D10_CREATE_DEVICE_DEBUG | D3D10_CREATE_DEVICE_BGRA_SUPPORT,
 		D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &d3d101Device);
 
 	//Create Shared Texture that Direct3D 10.1 will render on//////////////////////////////////////////////////////////////
@@ -211,7 +215,7 @@ bool Renderer::InitD2D_D3D101_DWrite(IDXGIAdapter1 *Adapter)
 	sharedTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	sharedTexDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
-	hr = d3d11Device->CreateTexture2D(&sharedTexDesc, NULL, &sharedTex11);
+	hr = d3d11Device->CreateTexture2D(&sharedTexDesc, nullptr, &sharedTex11);
 
 	// Get the keyed mutex for the shared texture (for D3D11)///////////////////////////////////////////////////////////////
 	hr = sharedTex11->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&keyedMutex11);
@@ -258,7 +262,7 @@ bool Renderer::InitD2D_D3D101_DWrite(IDXGIAdapter1 *Adapter)
 
 	hr = DWriteFactory->CreateTextFormat(
 		L"Script",
-		NULL,
+		nullptr,
 		DWRITE_FONT_WEIGHT_REGULAR,
 		DWRITE_FONT_STYLE_NORMAL,
 		DWRITE_FONT_STRETCH_NORMAL,
@@ -324,7 +328,7 @@ void Renderer::InitD2DScreenTexture()
 
 	//Create A shader resource view from the texture D2D will render to,
 	//So we can use it to texture a square which overlays our scene
-	d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
+	d3d11Device->CreateShaderResourceView(sharedTex11, nullptr, &d2dTexture);
 
 }
 
@@ -380,7 +384,7 @@ void Renderer::RenderText(std::wstring text)
 	//And only the stuff we draw with D2D will be visible (the text)
 
 	//Set the blend state for D2D render target texture objects
-	d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
+	d3d11DevCon->OMSetBlendState(Transparency, nullptr, 0xffffffff);
 
 	//Set the d2d Index buffer
 	d3d11DevCon->IASetIndexBuffer(d2dIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -392,7 +396,7 @@ void Renderer::RenderText(std::wstring text)
 	WVP = XMMatrixIdentity();
 	cbPerObj.World = XMMatrixTranspose(WVP);
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
-	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, nullptr, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTextSamplerState);
@@ -402,6 +406,76 @@ void Renderer::RenderText(std::wstring text)
 	d3d11DevCon->DrawIndexed(6, 0, 0);
 }
 
+bool Renderer::InitDirectInput(HINSTANCE hInstance)
+{
+	HRESULT hr;
+	hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, nullptr);
+
+	hr = DirectInput->CreateDevice(GUID_SysKeyboard, &DIKeyboard, nullptr);
+	hr = DirectInput->CreateDevice(GUID_SysMouse, &DIMouse, nullptr);
+
+	hr = DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
+	hr = DIKeyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+
+	hr = DIMouse->SetDataFormat(&c_dfDIMouse);
+	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
+
+	return true;
+}
+
+void Renderer::DetectInput(double time)
+{
+	DIMOUSESTATE mouseCurrState;
+
+	BYTE keyboardState[256];
+
+	DIKeyboard->Acquire();
+	DIMouse->Acquire();
+
+	DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouseCurrState);
+	DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
+
+	if (keyboardState[DIK_ESCAPE] & 0x80)
+		PostMessage(hwnd, WM_DESTROY, 0, 0);
+
+	if (keyboardState[DIK_LEFT] & 0x80)
+	{
+		rotz -= 1.0f * time;
+	}
+	if (keyboardState[DIK_RIGHT] & 0x80)
+	{
+		rotz += 1.0f * time;
+	}
+	if (keyboardState[DIK_UP] & 0x80)
+	{
+		rotx += 1.0f * time;
+	}
+	if (keyboardState[DIK_DOWN] & 0x80)
+	{
+		rotx -= 1.0f * time;
+	}
+	if (mouseCurrState.lX != mouseLastState.lX)
+	{
+		scaleX -= (mouseCurrState.lX * 0.001f);
+	}
+	if (mouseCurrState.lY != mouseLastState.lY)
+	{
+		scaleY -= (mouseCurrState.lY * 0.001f);
+	}
+
+	if (rotx > 6.28)
+		rotx -= 6.28;
+	else if (rotx < 0)
+		rotx = 6.28 + rotx;
+
+	if (rotz > 6.28)
+		rotz -= 6.28;
+	else if (rotz < 0)
+		rotz = 6.28 + rotz;
+
+	mouseLastState = mouseCurrState;
+}
+
 // Set up scene
 bool Renderer::InitScene()
 {
@@ -409,16 +483,16 @@ bool Renderer::InitScene()
 
 	// Place objects, load models, textures, sounds, all that must be done to start off specific scene.
 	//Compile Shaders from shader file
-	hr = D3DX11CompileFromFile(L"Effects.fx", 0, 0, "VS", "vs_5_0", 0, 0, 0, &VS_Buffer, 0, 0);
-	hr = D3DX11CompileFromFile(L"Effects.fx", 0, 0, "PS", "ps_5_0", 0, 0, 0, &PS_Buffer, 0, 0);
+	hr = D3DX11CompileFromFile(L"Effects.fx", nullptr, nullptr, "VS", "vs_5_0", 0, 0, nullptr, &VS_Buffer, nullptr, nullptr);
+	hr = D3DX11CompileFromFile(L"Effects.fx", nullptr, nullptr, "PS", "ps_5_0", 0, 0, nullptr, &PS_Buffer, nullptr, nullptr);
 
 	//Create the Shader Objects
-	hr = d3d11Device->CreateVertexShader(VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), NULL, &VS);
-	hr = d3d11Device->CreatePixelShader(PS_Buffer->GetBufferPointer(), PS_Buffer->GetBufferSize(), NULL, &PS);
+	hr = d3d11Device->CreateVertexShader(VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), nullptr, &VS);
+	hr = d3d11Device->CreatePixelShader(PS_Buffer->GetBufferPointer(), PS_Buffer->GetBufferSize(), nullptr, &PS);
 
 	//Set Vertex and Pixel Shaders
-	d3d11DevCon->VSSetShader(VS, 0, 0);
-	d3d11DevCon->PSSetShader(PS, 0, 0);
+	d3d11DevCon->VSSetShader(VS, nullptr, 0);
+	d3d11DevCon->PSSetShader(PS, nullptr, 0);
 
 	// Define Light
 	light.dir = XMFLOAT3(0.25f, 0.5f, -1.0f);
@@ -559,7 +633,7 @@ bool Renderer::InitScene()
 	cbbd.CPUAccessFlags = 0;
 	cbbd.MiscFlags = 0;
 
-	hr = d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerObjectBuffer);
+	hr = d3d11Device->CreateBuffer(&cbbd, nullptr, &cbPerObjectBuffer);
 
 	//Create the buffer to send to the cbuffer per frame in effect file
 	ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
@@ -570,7 +644,7 @@ bool Renderer::InitScene()
 	cbbd.CPUAccessFlags = 0;
 	cbbd.MiscFlags = 0;
 
-	hr = d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerFrameBuffer);
+	hr = d3d11Device->CreateBuffer(&cbbd, nullptr, &cbPerFrameBuffer);
 
 	//Camera information
 	camPosition = XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f);
@@ -584,7 +658,7 @@ bool Renderer::InitScene()
 	camProjection = XMMatrixPerspectiveFovLH(0.4f*3.14f, Width / Height, 1.0f, 1000.0f);
 
 	//Set Sampler State
-	hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, L"Texture.jpg", NULL, NULL, &CubesTexture, NULL);
+	hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, L"Texture.jpg", nullptr, nullptr, &CubesTexture, nullptr);
 	D3D11_SAMPLER_DESC samplerDesc;
 	ZeroMemory(&samplerDesc, sizeof(samplerDesc));
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -639,28 +713,28 @@ bool Renderer::InitScene()
 // Update scene per-frame
 void Renderer::UpdateScene(double time)
 {
-	// Keeps the cubes rotating
-	rot += 1.0f * time;
-	if (rot > 6.28f)
-		rot = 0.0f;
-
 	// Reset cube1World
 	cube1World = XMMatrixIdentity();
 
 	// Define cube1's world space matrix
-	XMVECTOR rotaxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	Rotation = XMMatrixRotationAxis(rotaxis, rot);
+	XMVECTOR rotyaxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR rotxaxis = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR rotzaxis = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+
+	Rotation = XMMatrixRotationAxis(rotyaxis, rot);
+	Rotationx = XMMatrixRotationAxis(rotxaxis, rotx);
+	Rotationz = XMMatrixRotationAxis(rotzaxis, rotz);
 	Translation = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
 
 	// Set cube1's world space using the transformations
-	cube1World = Translation * Rotation; // Translate then rotate to create orbit effect
+	cube1World = Translation * Rotation * Rotationx * Rotationz; // Translate then rotate to create orbit effect
 
 	// Reset cube2World
 	cube2World = XMMatrixIdentity();
 
 	// Define cube2's world space matrix
-	Rotation = XMMatrixRotationAxis(rotaxis, -rot);
-	Scale = XMMatrixScaling(1.3f, 1.3f, 1.3f);
+	Rotation = XMMatrixRotationAxis(rotyaxis, -rot);
+	Scale = XMMatrixScaling(scaleX, scaleY, 1.3f);
 
 	// Set cube2's world space matrix
 	cube2World = Rotation * Scale;
@@ -680,7 +754,7 @@ void Renderer::DrawScene()
 
 	// Create Light
 	constbuffPerFrame.light = light;
-	d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &constbuffPerFrame, 0, 0);
+	d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, nullptr, &constbuffPerFrame, 0, 0);
 	d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
 
 
@@ -688,7 +762,7 @@ void Renderer::DrawScene()
 	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
 
 	// Set default blend state (no blending) for opaque objects
-	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
+	d3d11DevCon->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 	//Set the cubes index buffer
 	d3d11DevCon->IASetIndexBuffer(squareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -704,7 +778,7 @@ void Renderer::DrawScene()
 	WVP = cube1World * camView * camProjection;
 	cbPerObj.World = XMMatrixTranspose(cube1World);
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
-	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, nullptr, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTextSamplerState);
@@ -715,7 +789,7 @@ void Renderer::DrawScene()
 	WVP = cube2World * camView * camProjection;
 	cbPerObj.World = XMMatrixTranspose(cube2World);
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
-	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, nullptr, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTextSamplerState);

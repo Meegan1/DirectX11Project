@@ -1,6 +1,4 @@
 #include "Engine.h"
-#include <string>
-#include "Renderer.h"
 
 
 Engine::Engine(HINSTANCE hInstance, int nShowCmd)
@@ -150,8 +148,8 @@ int Engine::Run() {
 		}
 		else {
 			// run game code
-
-			renderer->UpdateScene();
+			HRT::Tick();
+			renderer->UpdateScene(HRT::GetFrameTime());
 			renderer->DrawScene();
 		}
 	}

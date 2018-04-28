@@ -1,8 +1,10 @@
 #pragma once
 #include <windows.h>
 #include "Version.hpp"
-#include <iostream>;
+#include <iostream>
+#include <string>
 #include "Renderer.h"
+#include "hrt.h"
 
 using std::cout;
 

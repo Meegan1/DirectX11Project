@@ -433,47 +433,64 @@ void Renderer::DetectInput(double time)
 	DIMouse->Acquire();
 
 	DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouseCurrState);
+
 	DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
 
 	if (keyboardState[DIK_ESCAPE] & 0x80)
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
 
-	if (keyboardState[DIK_LEFT] & 0x80)
+	float speed = 15.0f * time;
+
+	if (keyboardState[DIK_A] & 0x80)
 	{
-		rotz -= 1.0f * time;
+		moveLeftRight -= speed;
 	}
-	if (keyboardState[DIK_RIGHT] & 0x80)
+	if (keyboardState[DIK_D] & 0x80)
 	{
-		rotz += 1.0f * time;
+		moveLeftRight += speed;
 	}
-	if (keyboardState[DIK_UP] & 0x80)
+	if (keyboardState[DIK_W] & 0x80)
 	{
-		rotx += 1.0f * time;
+		moveBackForward += speed;
 	}
-	if (keyboardState[DIK_DOWN] & 0x80)
+	if (keyboardState[DIK_S] & 0x80)
 	{
-		rotx -= 1.0f * time;
+		moveBackForward -= speed;
 	}
-	if (mouseCurrState.lX != mouseLastState.lX)
+	if ((mouseCurrState.lX != mouseLastState.lX) || (mouseCurrState.lY != mouseLastState.lY))
 	{
-		scaleX -= (mouseCurrState.lX * 0.001f);
-	}
-	if (mouseCurrState.lY != mouseLastState.lY)
-	{
-		scaleY -= (mouseCurrState.lY * 0.001f);
+		camYaw += mouseLastState.lX * 0.001f;
+
+		camPitch += mouseCurrState.lY * 0.001f;
+
+		mouseLastState = mouseCurrState;
 	}
 
-	if (rotx > 6.28)
-		rotx -= 6.28;
-	else if (rotx < 0)
-		rotx = 6.28 + rotx;
+	UpdateCamera();
+}
 
-	if (rotz > 6.28)
-		rotz -= 6.28;
-	else if (rotz < 0)
-		rotz = 6.28 + rotz;
+void Renderer::UpdateCamera()
+{
+	camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
+	camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
+	camTarget = XMVector3Normalize(camTarget);
 
-	mouseLastState = mouseCurrState;
+	XMMATRIX RotateYTempMatrix;
+	RotateYTempMatrix = XMMatrixRotationY(camYaw);
+
+	camRight = XMVector3TransformCoord(DefaultRight, RotateYTempMatrix);
+	camUp = XMVector3TransformCoord(camUp, RotateYTempMatrix);
+	camForward = XMVector3TransformCoord(DefaultForward, RotateYTempMatrix);
+
+	camPosition += moveLeftRight * camRight;
+	camPosition += moveBackForward * camForward;
+
+	moveLeftRight = 0.0f;
+	moveBackForward = 0.0f;
+
+	camTarget = camPosition + camTarget;
+
+	camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
 }
 
 // Set up scene
@@ -495,107 +512,52 @@ bool Renderer::InitScene()
 	d3d11DevCon->PSSetShader(PS, nullptr, 0);
 
 	// Define Light
-	light.dir = XMFLOAT3(0.25f, 0.5f, -1.0f);
+	light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	Vertex vertices[] =
+	//Create the vertex buffer
+	Vertex v[] =
 	{
-		// Front Face
-		Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-		Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-		Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-		Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-
-		// Back Face
-		Vertex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f,-1.0f, -1.0f, 1.0f),
-		Vertex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f),
-		Vertex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f),
-		Vertex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f,-1.0f,  1.0f, 1.0f),
-
-		// Top Face
-		Vertex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f,-1.0f, 1.0f, -1.0f),
-		Vertex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f,-1.0f, 1.0f,  1.0f),
-		Vertex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f),
-		Vertex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f),
-
 		// Bottom Face
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-		Vertex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  1.0f),
-		Vertex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f,-1.0f, -1.0f,  1.0f),
-
-		// Left Face
-		Vertex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f,-1.0f, -1.0f,  1.0f),
-		Vertex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f,-1.0f,  1.0f,  1.0f),
-		Vertex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-
-		// Right Face
-		Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-		Vertex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-		Vertex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f),
-		Vertex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  1.0f),
+		Vertex(-1.0f, -1.0f, -1.0f, 100.0f, 100.0f, 0.0f, 1.0f, 0.0f),
+		Vertex(1.0f, -1.0f, -1.0f,   0.0f, 100.0f, 0.0f, 1.0f, 0.0f),
+		Vertex(1.0f, -1.0f,  1.0f,   0.0f,   0.0f, 0.0f, 1.0f, 0.0f),
+		Vertex(-1.0f, -1.0f,  1.0f, 100.0f,   0.0f, 0.0f, 1.0f, 0.0f),
 	};
 
 	DWORD indices[] = {
-		// Front Face
 		0,  1,  2,
 		0,  2,  3,
-
-		// Back Face
-		4,  5,  6,
-		4,  6,  7,
-
-		// Top Face
-		8,  9, 10,
-		8, 10, 11,
-
-		// Bottom Face
-		12, 13, 14,
-		12, 14, 15,
-
-		// Left Face
-		16, 17, 18,
-		16, 18, 19,
-
-		// Right Face
-		20, 21, 22,
-		20, 22, 23
 	};
-	//Create the Index Buffer Desc
+
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
 
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(DWORD) * 12 * 3;
+	indexBufferDesc.ByteWidth = sizeof(DWORD) * 2 * 3;
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.CPUAccessFlags = 0;
 	indexBufferDesc.MiscFlags = 0;
 
-	//Create the Vertex Buffer Desc
-	D3D11_BUFFER_DESC vertexBufferDesc;
-	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(Vertex) * 24;
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
-
-	// Create Index Buffer
 	D3D11_SUBRESOURCE_DATA iinitData;
 
 	iinitData.pSysMem = indices;
 	d3d11Device->CreateBuffer(&indexBufferDesc, &iinitData, &squareIndexBuffer);
 
-	d3d11DevCon->IASetIndexBuffer(squareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
 
-	// Create Vertex Buffer
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex) * 4;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags = 0;
+
 	D3D11_SUBRESOURCE_DATA vertexBufferData;
 
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-	vertexBufferData.pSysMem = vertices;
+	vertexBufferData.pSysMem = v;
 	hr = d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &squareVertBuffer);
 
 
@@ -713,32 +675,15 @@ bool Renderer::InitScene()
 // Update scene per-frame
 void Renderer::UpdateScene(double time)
 {
-	// Reset cube1World
-	cube1World = XMMatrixIdentity();
+	//Reset cube1World
+	groundWorld = XMMatrixIdentity();
 
-	// Define cube1's world space matrix
-	XMVECTOR rotyaxis = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMVECTOR rotxaxis = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR rotzaxis = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	//Define cube1's world space matrix
+	Scale = XMMatrixScaling(500.0f, 10.0f, 500.0f);
+	Translation = XMMatrixTranslation(0.0f, 10.0f, 0.0f);
 
-	Rotation = XMMatrixRotationAxis(rotyaxis, rot);
-	Rotationx = XMMatrixRotationAxis(rotxaxis, rotx);
-	Rotationz = XMMatrixRotationAxis(rotzaxis, rotz);
-	Translation = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
-
-	// Set cube1's world space using the transformations
-	cube1World = Translation * Rotation * Rotationx * Rotationz; // Translate then rotate to create orbit effect
-
-	// Reset cube2World
-	cube2World = XMMatrixIdentity();
-
-	// Define cube2's world space matrix
-	Rotation = XMMatrixRotationAxis(rotyaxis, -rot);
-	Scale = XMMatrixScaling(scaleX, scaleY, 1.3f);
-
-	// Set cube2's world space matrix
-	cube2World = Rotation * Scale;
-
+	//Set cube1's world space using the transformations
+	groundWorld = Scale * Translation;
 }
 
 // Draw scene to screen
@@ -746,7 +691,7 @@ void Renderer::DrawScene()
 {
 
 	// Clear the backbuffer
-	float bgColor[4] = { (0.0f, 0.0f, 0.0f, 0.0f) };
+	float bgColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 
 	// Refresh the Depth/Stencil view
@@ -757,12 +702,15 @@ void Renderer::DrawScene()
 	d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, nullptr, &constbuffPerFrame, 0, 0);
 	d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
 
-
-	// Blending
-	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
+	//Set our Render Target
+	d3d11DevCon->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 
 	// Set default blend state (no blending) for opaque objects
-	d3d11DevCon->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
+
+	//Set Vertex and Pixel Shaders
+	d3d11DevCon->VSSetShader(VS, 0, 0);
+	d3d11DevCon->PSSetShader(PS, 0, 0);
 
 	//Set the cubes index buffer
 	d3d11DevCon->IASetIndexBuffer(squareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -771,32 +719,19 @@ void Renderer::DrawScene()
 	UINT offset = 0;
 	d3d11DevCon->IASetVertexBuffers(0, 1, &squareVertBuffer, &stride, &offset);
 
-	// =========[Render opaque objects]=========
 
 
 	// Set World/View/Projection matrix, then send it to constant buffer in effect file
-	WVP = cube1World * camView * camProjection;
-	cbPerObj.World = XMMatrixTranspose(cube1World);
+	WVP = groundWorld * camView * camProjection;
+	cbPerObj.World = XMMatrixTranspose(groundWorld);
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
 	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, nullptr, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTextSamplerState);
 
-	d3d11DevCon->RSSetState(CWcullMode);
-	d3d11DevCon->DrawIndexed(36, 0, 0);
-
-	WVP = cube2World * camView * camProjection;
-	cbPerObj.World = XMMatrixTranspose(cube2World);
-	cbPerObj.WVP = XMMatrixTranspose(WVP);
-	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, nullptr, &cbPerObj, 0, 0);
-	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
-	d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
-	d3d11DevCon->PSSetSamplers(0, 1, &CubesTextSamplerState);
-
-	// Draw the second cube
-	d3d11DevCon->RSSetState(CWcullMode);
-	d3d11DevCon->DrawIndexed(36, 0, 0);
+	d3d11DevCon->RSSetState(CCWcullMode);
+	d3d11DevCon->DrawIndexed(6, 0, 0);
 
 	std::wstringstream text;
 	text << "FPS: " << HRT::GetFPS();

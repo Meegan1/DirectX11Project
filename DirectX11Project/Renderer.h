@@ -49,6 +49,8 @@ public:
 	bool InitDirectInput(HINSTANCE hInstance);
 	void DetectInput(double time);
 
+	void UpdateCamera();
+
 private:
 	IDXGISwapChain * SwapChain;
 	ID3D11Device* d3d11Device;
@@ -81,13 +83,19 @@ private:
 	DIMOUSESTATE mouseLastState;
 	LPDIRECTINPUT8 DirectInput;
 
-	float rotx = 0;
-	float rotz = 0;
-	float scaleX = 1.0f;
-	float scaleY = 1.0f;
+	XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 
-	XMMATRIX Rotationx;
-	XMMATRIX Rotationz;
+	XMMATRIX camRotationMatrix;
+	XMMATRIX groundWorld;
+
+	float moveLeftRight = 0.0f;
+	float moveBackForward = 0.0f;
+
+	float camYaw = 0.0f;
+	float camPitch = 0.0f;
 
 	// ===============[2D Font]=================
 	ID3D10Device1 *d3d101Device;

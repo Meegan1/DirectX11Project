@@ -60,10 +60,12 @@ private:
 
 	ID3D11ShaderResourceView* CubesTexture;
 	ID3D11SamplerState* CubesTextSamplerState;
+	ID3D11Buffer* cbPerFrameBuffer;
 
 	ID3D11BlendState* Transparency;
 	ID3D11RasterizerState* CCWcullMode;
 	ID3D11RasterizerState* CWcullMode;
+
 
 
 	ID3D10Device1 *d3d101Device;
@@ -100,23 +102,49 @@ private:
 	struct cbPerObject
 	{
 		XMMATRIX WVP;
+		XMMATRIX World;
 	};
 	cbPerObject cbPerObj;
 
+	struct Light
+	{
+		Light()
+		{
+			ZeroMemory(this, sizeof(Light));
+		}
+		XMFLOAT3 dir;
+		float pad;
+		XMFLOAT4 ambient;
+		XMFLOAT4 diffuse;
+	};
+
+	Light light;
+
+	struct cbPerFrame
+	{
+		Light  light;
+	};
+	cbPerFrame constbuffPerFrame;
+
 	//Vertex Structure and Vertex Layout (Input Layout)//
-	struct Vertex	//Overloaded Vertex Structure
+	struct Vertex    //Overloaded Vertex Structure
 	{
 		Vertex() {}
-		Vertex(float x, float y, float z, float u, float v)
-			: pos(x, y, z), texCoord(u, v) {}
+		Vertex(float x, float y, float z,
+			float u, float v,
+			float nx, float ny, float nz)
+			: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
 
 		XMFLOAT3 pos;
 		XMFLOAT2 texCoord;
+		XMFLOAT3 normal;
 	};
-	D3D11_INPUT_ELEMENT_DESC layout[2] =
+
+	D3D11_INPUT_ELEMENT_DESC layout[3] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",     0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT numElements = ARRAYSIZE(layout);
 };

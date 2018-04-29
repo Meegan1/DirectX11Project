@@ -59,5 +59,8 @@
     <Image Include="Texture.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="skymap.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

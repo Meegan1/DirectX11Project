@@ -28,6 +28,8 @@
 
 #include <iostream>
 #include "hrt.h"
+
+#include <vector>
 using std::cout;
 
 class Renderer
@@ -50,6 +52,8 @@ public:
 	void DetectInput(double time);
 
 	void UpdateCamera();
+
+	void CreateSphere(int LatLines, int LongLines);
 
 private:
 	IDXGISwapChain * SwapChain;
@@ -75,6 +79,29 @@ private:
 	ID3D11BlendState* Transparency;
 	ID3D11RasterizerState* CCWcullMode;
 	ID3D11RasterizerState* CWcullMode;
+
+	//===============[SkyBox]========================
+	ID3D11Buffer* sphereIndexBuffer;
+	ID3D11Buffer* sphereVertBuffer;
+
+	ID3D11VertexShader* SKYMAP_VS;
+	ID3D11PixelShader* SKYMAP_PS;
+	ID3D10Blob* SKYMAP_VS_Buffer;
+	ID3D10Blob* SKYMAP_PS_Buffer;
+
+	ID3D11ShaderResourceView* smrv;
+
+	ID3D11DepthStencilState* DSLessEqual;
+	ID3D11RasterizerState* RSCullNone;
+
+	int NumSphereVertices;
+	int NumSphereFaces;
+
+	XMMATRIX sphereWorld;
+
+	XMMATRIX Rotationx;
+	XMMATRIX Rotationy;
+	XMMATRIX Rotationz;
 
 	// =============[Direct Input]===================
 	IDirectInputDevice8* DIKeyboard;
